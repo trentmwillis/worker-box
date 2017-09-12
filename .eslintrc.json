@@ -1,0 +1,15 @@
+{
+  "extends": "airbnb-base",
+  "parserOptions": {
+      "sourceType": "script"
+  },
+  "env":{
+      "browser": true
+  },
+  "rules": {
+      "no-restricted-globals": "off",
+      "padded-blocks": [ "error", "always" ],
+      "space-before-function-paren": "off",
+      "strict": [ "error", "function" ]
+  }
+}
