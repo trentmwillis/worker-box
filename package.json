@@ -12,6 +12,7 @@
     "test:dev": "testem"
   },
   "author": "Trent Willis <trentmwillis@gmail.com>",
+  "repository": "trentmwillis/worker-box",
   "license": "MIT",
   "devDependencies": {
     "eslint": "^4.6.1",
