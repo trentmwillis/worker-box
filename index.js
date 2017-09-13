@@ -2,28 +2,32 @@ window.WorkerBox = (function initWorkerBox() {
 
   'use strict';
 
-  function stubImportScripts(base) {
+  function stubImportScripts() {
+
+    let relativeTo;
 
     const originalImportScripts = self.importScripts;
     self.importScripts = function stubbedImportScripts(...scripts) {
 
       scripts.forEach((script) => {
 
-        originalImportScripts(new URL(script, base));
+        originalImportScripts(new URL(script, relativeTo));
 
       });
 
     };
 
-    // self.importScriptAndChangeRelativity(script) {
+    self.importScripts.relativeTo = function setImportScriptsRelativeTo(base) {
 
+      relativeTo = base;
 
+    };
 
-    // }
+    self.importScriptAndChangeRelativity = function importScriptAndChangeRelativity(script) {
 
-    self.importScripts.restore = function restoreImportScripts() {
-
-      self.importScripts = originalImportScripts();
+      const absoluteScript = new URL(script, relativeTo);
+      self.importScripts.relativeTo(absoluteScript);
+      self.importScripts(absoluteScript);
 
     };
 
@@ -48,7 +52,9 @@ window.WorkerBox = (function initWorkerBox() {
     const { script, options: { code, importScripts } } = workerDefinition;
     const src = [];
 
-    src.push(`(${stubImportScripts.toString()}('${location.href}'));`);
+    src.push(`${stubImportScripts.toString()}`);
+    src.push('stubImportScripts();');
+    src.push(`importScripts.relativeTo('${location.href}');`);
 
     if (importScripts.length) {
 
@@ -58,7 +64,7 @@ window.WorkerBox = (function initWorkerBox() {
     }
 
     src.push(`${stringifyFunction(code)}`);
-    src.push(`importScripts('${script}');`);
+    src.push(`importScriptAndChangeRelativity('${script}');`);
 
     const blob = new Blob([src.join('\n')], { type: 'application/javascript' });
     const url = URL.createObjectURL(blob);
@@ -71,7 +77,9 @@ window.WorkerBox = (function initWorkerBox() {
     const { options: { code, importScripts } } = workerDefinition;
     const src = [];
 
-    src.push(`(${stubImportScripts.toString()}('${location.href}'));`);
+    src.push(`${stubImportScripts.toString()}`);
+    src.push('stubImportScripts();');
+    src.push(`importScripts.relativeTo('${location.href}');`);
 
     if (importScripts.length) {
 
@@ -208,10 +216,10 @@ window.WorkerBox = (function initWorkerBox() {
   }
 
   return {
-    setup,
-    prepend,
-    stub,
     cleanup,
+    prepend,
+    setup,
+    stub,
   };
 
 }());

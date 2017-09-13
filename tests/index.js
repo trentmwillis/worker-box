@@ -2,31 +2,6 @@ QUnit.module('WorkerBox', function(hooks) {
 
   'use strict';
 
-  function waitFor(time) {
-
-    const startTime = Date.now();
-    return new Promise((resolve) => {
-
-      function tick() {
-
-        if (Date.now() - startTime > time) {
-
-          resolve();
-
-        } else {
-
-          setTimeout(tick);
-
-        }
-
-      }
-
-      tick();
-
-    });
-
-  }
-
   hooks.afterEach(function() {
 
     WorkerBox.cleanup();
@@ -364,7 +339,7 @@ QUnit.module('WorkerBox', function(hooks) {
 
     });
 
-    QUnit.skip('imported scripts within original worker are resolved relative to the worker\'s path', function(assert) {
+    QUnit.test('imported scripts within original worker are resolved relative to the worker\'s path', function(assert) {
 
       WorkerBox.setup();
       WorkerBox.prepend('/tests/fixtures/import-worker.js');
@@ -378,7 +353,6 @@ QUnit.module('WorkerBox', function(hooks) {
           message: originalMessage,
           environment: {
             from: 'define-env',
-            again: 'define-env-2',
           },
         });
         worker.terminate();
