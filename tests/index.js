@@ -29,7 +29,7 @@ QUnit.module('WorkerBox', function(hooks) {
 
   hooks.afterEach(function() {
 
-    WorkerBox.restore();
+    WorkerBox.cleanup();
 
   });
 
@@ -61,6 +61,25 @@ QUnit.module('WorkerBox', function(hooks) {
     worker.onmessage = (message) => {
 
       assert.strictEqual(message.data, originalMessage);
+      worker.terminate();
+      done();
+
+    };
+    worker.postMessage(originalMessage);
+
+  });
+
+  QUnit.test('/tests/fixtures/environment-worker.js', async function(assert) {
+
+    const done = assert.async();
+    const originalMessage = 'foo';
+    const worker = new Worker('/tests/fixtures/environment-worker.js');
+    worker.onmessage = (message) => {
+
+      assert.deepEqual(message.data, {
+        message: originalMessage,
+        environment: undefined,
+      });
       worker.terminate();
       done();
 
@@ -133,12 +152,12 @@ QUnit.module('WorkerBox', function(hooks) {
 
       WorkerBox.setup();
       WorkerBox.stub('/tests/fixtures/simple-worker.js', {
-        importScripts: ['/tests/fixtures/define-global.js'],
+        importScripts: ['/tests/fixtures/define-env.js'],
         code() {
 
           self.onmessage = function onmessage() {
 
-            postMessage(`global is defined ${global === 'global'}`);
+            postMessage(self.env);
 
           };
 
@@ -150,7 +169,7 @@ QUnit.module('WorkerBox', function(hooks) {
       const worker = new Worker('/tests/fixtures/simple-worker.js');
       worker.onmessage = (message) => {
 
-        assert.equal(message.data, 'global is defined true');
+        assert.deepEqual(message.data, { from: 'define-env' });
         done();
 
       };
@@ -158,11 +177,52 @@ QUnit.module('WorkerBox', function(hooks) {
 
     });
 
-    QUnit.test('throws an error if script has already been stubbed', function(assert) {
+    QUnit.test('throws an error if script has already been registered', function(assert) {
 
       WorkerBox.setup();
       WorkerBox.stub('/tests/fixtures/simple-worker.js');
       assert.throws(() => WorkerBox.stub('/tests/fixtures/simple-worker.js'), /The Worker script "\/tests\/fixtures\/simple-worker.js" has already been registered with "stub"/);
+
+    });
+
+    QUnit.test('throws an error if script has already been registered with a different relative path', function(assert) {
+
+      WorkerBox.setup();
+      WorkerBox.stub('/tests/fixtures/simple-worker.js');
+      assert.throws(() => WorkerBox.stub('../../tests/fixtures/simple-worker.js'), /The Worker script "..\/..\/tests\/fixtures\/simple-worker.js" has already been registered with "stub"/);
+
+    });
+
+    QUnit.test('imported scripts are resolved relative to the current path', function(assert) {
+
+      WorkerBox.setup();
+      WorkerBox.stub('/tests/fixtures/simple-worker.js', {
+        importScripts: ['../../tests/fixtures/define-env.js'],
+        code() {
+
+          self.importScripts('../../tests/fixtures/define-env-2.js');
+          self.onmessage = function onmessage() {
+
+            postMessage(self.env);
+
+          };
+
+        },
+      });
+
+      const done = assert.async();
+      const originalMessage = 'foo';
+      const worker = new Worker('/tests/fixtures/simple-worker.js');
+      worker.onmessage = (message) => {
+
+        assert.deepEqual(message.data, {
+          from: 'define-env',
+          again: 'define-env-2',
+        });
+        done();
+
+      };
+      worker.postMessage(originalMessage);
 
     });
 
@@ -172,23 +232,162 @@ QUnit.module('WorkerBox', function(hooks) {
 
     QUnit.test('prepends the specified code to the specified script', function(assert) {
 
+      WorkerBox.setup();
+      WorkerBox.prepend('/tests/fixtures/environment-worker.js', {
+        code() {
+
+          self.env = 'derp;herp';
+
+        },
+      });
+
+      const done = assert.async();
+      const originalMessage = 'foo';
+      const worker = new Worker('/tests/fixtures/environment-worker.js');
+      worker.onmessage = (message) => {
+
+        assert.deepEqual(message.data, {
+          message: originalMessage,
+          environment: 'derp;herp',
+        });
+        worker.terminate();
+        done();
+
+      };
+      worker.postMessage(originalMessage);
+
     });
 
     QUnit.test('prepends the specified imports to the specified script', function(assert) {
+
+      WorkerBox.setup();
+      WorkerBox.prepend('/tests/fixtures/environment-worker.js', {
+        importScripts: ['/tests/fixtures/define-env.js'],
+      });
+
+      const done = assert.async();
+      const originalMessage = 'foo';
+      const worker = new Worker('/tests/fixtures/environment-worker.js');
+      worker.onmessage = (message) => {
+
+        assert.deepEqual(message.data, {
+          message: originalMessage,
+          environment: {
+            from: 'define-env',
+          },
+        });
+        worker.terminate();
+        done();
+
+      };
+      worker.postMessage(originalMessage);
 
     });
 
     QUnit.test('prepends the specified code and imports to the specified script', function(assert) {
 
+      WorkerBox.setup();
+      WorkerBox.prepend('/tests/fixtures/environment-worker.js', {
+        importScripts: ['/tests/fixtures/define-env.js'],
+        code() {
+
+          self.env = Object.assign(self.env, { prepend: 'derp;herp' });
+
+        },
+      });
+
+      const done = assert.async();
+      const originalMessage = 'foo';
+      const worker = new Worker('/tests/fixtures/environment-worker.js');
+      worker.onmessage = (message) => {
+
+        assert.deepEqual(message.data, {
+          message: originalMessage,
+          environment: {
+            from: 'define-env',
+            prepend: 'derp;herp',
+          },
+        });
+        worker.terminate();
+        done();
+
+      };
+      worker.postMessage(originalMessage);
+
     });
 
-    QUnit.test('throws an error if script has already been prepended', function(assert) {
+    QUnit.test('throws an error if script has already been registered', function(assert) {
+
+      WorkerBox.setup();
+      WorkerBox.prepend('/tests/fixtures/simple-worker.js');
+      assert.throws(() => WorkerBox.prepend('/tests/fixtures/simple-worker.js'), /The Worker script "\/tests\/fixtures\/simple-worker.js" has already been registered with "prepend"/);
 
     });
 
-  });
+    QUnit.test('throws an error if script has already been registered with a different relative path', function(assert) {
 
-  QUnit.module('create', function() {
+      WorkerBox.setup();
+      WorkerBox.prepend('/tests/fixtures/simple-worker.js');
+      assert.throws(() => WorkerBox.prepend('../../tests/fixtures/simple-worker.js'), /The Worker script "..\/..\/tests\/fixtures\/simple-worker.js" has already been registered with "prepend"/);
+
+    });
+
+    QUnit.test('imported scripts are resolved relative to the current path', function(assert) {
+
+      WorkerBox.setup();
+      WorkerBox.prepend('/tests/fixtures/environment-worker.js', {
+        importScripts: ['../../tests/fixtures/define-env.js'],
+        code() {
+
+          self.importScripts('../../tests/fixtures/define-env-2.js');
+
+        },
+      });
+
+      const done = assert.async();
+      const originalMessage = 'foo';
+      const worker = new Worker('/tests/fixtures/environment-worker.js');
+      worker.onmessage = (message) => {
+
+        assert.deepEqual(message.data, {
+          message: originalMessage,
+          environment: {
+            from: 'define-env',
+            again: 'define-env-2',
+          },
+        });
+        worker.terminate();
+        done();
+
+      };
+      worker.postMessage(originalMessage);
+
+    });
+
+    QUnit.skip('imported scripts within original worker are resolved relative to the worker\'s path', function(assert) {
+
+      WorkerBox.setup();
+      WorkerBox.prepend('/tests/fixtures/import-worker.js');
+
+      const done = assert.async();
+      const originalMessage = 'foo';
+      const worker = new Worker('/tests/fixtures/import-worker.js');
+      worker.onmessage = (message) => {
+
+        assert.deepEqual(message.data, {
+          message: originalMessage,
+          environment: {
+            from: 'define-env',
+            again: 'define-env-2',
+          },
+        });
+        worker.terminate();
+        done();
+
+      };
+      worker.postMessage(originalMessage);
+
+    });
 
   });
 

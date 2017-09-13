@@ -15,6 +15,12 @@ window.WorkerBox = (function initWorkerBox() {
 
     };
 
+    // self.importScriptAndChangeRelativity(script) {
+
+
+
+    // }
+
     self.importScripts.restore = function restoreImportScripts() {
 
       self.importScripts = originalImportScripts();
@@ -37,18 +43,24 @@ window.WorkerBox = (function initWorkerBox() {
 
   }
 
-  function createWorkerPrepend(originalScript, code, importScripts, workerOptions) {
+  function createWorkerPrepend(workerDefinition, workerOptions) {
 
-    const baseUrl = `${document.location.protocol}//${document.location.host}`;
-    const importScriptList = importScripts.map(script => `'${baseUrl}${script}'`).join(', ');
+    const { script, options: { code, importScripts } } = workerDefinition;
+    const src = [];
 
-    const src = `
-    (${stubImportScripts.toString()}('${baseUrl}${originalScript}'));
-    importScripts(${importScriptList});
-    ${stringifyFunction(code)}
-    importScripts('${baseUrl}${originalScript}');
-    `;
-    const blob = new Blob([src], { type: 'application/javascript' });
+    src.push(`(${stubImportScripts.toString()}('${location.href}'));`);
+
+    if (importScripts.length) {
+
+      const importScriptList = importScripts.map(importScript => `'${importScript}'`).join(', ');
+      src.push(`importScripts(${importScriptList});`);
+
+    }
+
+    src.push(`${stringifyFunction(code)}`);
+    src.push(`importScripts('${script}');`);
+
+    const blob = new Blob([src.join('\n')], { type: 'application/javascript' });
     const url = URL.createObjectURL(blob);
     return new Worker(url, workerOptions);
 
@@ -59,11 +71,11 @@ window.WorkerBox = (function initWorkerBox() {
     const { options: { code, importScripts } } = workerDefinition;
     const src = [];
 
+    src.push(`(${stubImportScripts.toString()}('${location.href}'));`);
+
     if (importScripts.length) {
 
       const importScriptList = importScripts.map(script => `'${script}'`).join(', ');
-
-      src.push(`(${stubImportScripts.toString()}('${location.href}'));`);
       src.push(`importScripts(${importScriptList});`);
 
     }
@@ -98,9 +110,10 @@ window.WorkerBox = (function initWorkerBox() {
    * @param {string} script
    * @param {object} options
    */
-  function prepend(script, options) {
+  function prepend(script, options = {}) {
 
-    const workerDefinition = findWorkerDefinition(script);
+    const absoluteScript = (new URL(script, location.href)).toString();
+    const workerDefinition = findWorkerDefinition(absoluteScript);
     if (workerDefinition) {
 
       throw new Error(`The Worker script "${script}" has already been registered with "${workerDefinition.type}".`);
@@ -112,7 +125,7 @@ window.WorkerBox = (function initWorkerBox() {
 
     workerDefinitions.push({
       type: 'prepend',
-      script,
+      script: absoluteScript,
       options,
     });
 
@@ -127,7 +140,8 @@ window.WorkerBox = (function initWorkerBox() {
    */
   function stub(script, options = {}) {
 
-    const workerDefinition = findWorkerDefinition(script);
+    const absoluteScript = (new URL(script, location.href)).toString();
+    const workerDefinition = findWorkerDefinition(absoluteScript);
     if (workerDefinition) {
 
       throw new Error(`The Worker script "${script}" has already been registered with "${workerDefinition.type}".`);
@@ -139,7 +153,7 @@ window.WorkerBox = (function initWorkerBox() {
 
     workerDefinitions.push({
       type: 'stub',
-      script,
+      script: absoluteScript,
       options,
     });
 
@@ -155,7 +169,8 @@ window.WorkerBox = (function initWorkerBox() {
 
     function FakeWorker(script, workerOptions) {
 
-      const workerDefinition = findWorkerDefinition(script);
+      const absoluteScript = (new URL(script, location.href)).toString();
+      const workerDefinition = findWorkerDefinition(absoluteScript);
       let worker;
       if (workerDefinition) {
 
@@ -179,7 +194,7 @@ window.WorkerBox = (function initWorkerBox() {
 
   }
 
-  function restore() {
+  function cleanup() {
 
     if (self.Worker.isWorkerBox) {
 
@@ -196,7 +211,7 @@ window.WorkerBox = (function initWorkerBox() {
     setup,
     prepend,
     stub,
-    restore,
+    cleanup,
   };
 
 }());
