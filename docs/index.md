@@ -60,3 +60,13 @@ WorkerBox.prepend(scriptPath, {
 This is particularly useful for scenarios where you wish to alter some state before the Worker executes, such as setting up a mock server to handle external requests.
 
 The parameters and options for `prepend` are the same as for `stub`. The only difference is that after `importScripts` and `code` execute, the original Worker script will also execute. Note that `importScripts` executed from within your original Worker will resolve paths relative to that Worker's path as they would in normal usage.
+
+## Creating A Worker
+
+If you want to create a Worker directly, as opposed to stubbing/modifying a Worker script, you can use the `create` function.
+
+```js
+WorkerBox.create(code);
+```
+
+This will create a Worker instance from the provided function, `code`, which you can then interact with like a normal Worker just without a separate file.

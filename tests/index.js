@@ -8,6 +8,41 @@ QUnit.module('WorkerBox', function(hooks) {
 
   });
 
+  QUnit.test('ensure /tests/fixtures/simple-worker.js behaves as expected', async function(assert) {
+
+    const done = assert.async();
+    const originalMessage = 'foo';
+    const worker = new Worker('/tests/fixtures/simple-worker.js');
+    worker.onmessage = (message) => {
+
+      assert.strictEqual(message.data, originalMessage);
+      worker.terminate();
+      done();
+
+    };
+    worker.postMessage(originalMessage);
+
+  });
+
+  QUnit.test('ensure /tests/fixtures/environment-worker.js behaves as expected', async function(assert) {
+
+    const done = assert.async();
+    const originalMessage = 'foo';
+    const worker = new Worker('/tests/fixtures/environment-worker.js');
+    worker.onmessage = (message) => {
+
+      assert.deepEqual(message.data, {
+        message: originalMessage,
+        environment: undefined,
+      });
+      worker.terminate();
+      done();
+
+    };
+    worker.postMessage(originalMessage);
+
+  });
+
   QUnit.module('setup', function() {
 
     QUnit.test('replaces the global Worker with a FakeWorker', function(assert) {
@@ -28,38 +63,31 @@ QUnit.module('WorkerBox', function(hooks) {
 
   });
 
-  QUnit.test('/tests/fixtures/simple-worker.js', async function(assert) {
+  QUnit.module('create', function() {
 
-    const done = assert.async();
-    const originalMessage = 'foo';
-    const worker = new Worker('/tests/fixtures/simple-worker.js');
-    worker.onmessage = (message) => {
+    QUnit.test('creates a worker from the given function', function(assert) {
 
-      assert.strictEqual(message.data, originalMessage);
-      worker.terminate();
-      done();
+      const done = assert.async();
+      const originalMessage = 'foo';
+      const worker = WorkerBox.create(() => {
 
-    };
-    worker.postMessage(originalMessage);
+        self.onmessage = function onmessage(message) {
 
-  });
+          postMessage(`it works, ${message.data}!`);
 
-  QUnit.test('/tests/fixtures/environment-worker.js', async function(assert) {
+        };
 
-    const done = assert.async();
-    const originalMessage = 'foo';
-    const worker = new Worker('/tests/fixtures/environment-worker.js');
-    worker.onmessage = (message) => {
-
-      assert.deepEqual(message.data, {
-        message: originalMessage,
-        environment: undefined,
       });
-      worker.terminate();
-      done();
+      worker.onmessage = (message) => {
 
-    };
-    worker.postMessage(originalMessage);
+        assert.strictEqual(message.data, 'it works, foo!');
+        worker.terminate();
+        done();
+
+      };
+      worker.postMessage(originalMessage);
+
+    });
 
   });
 

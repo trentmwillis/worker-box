@@ -96,7 +96,7 @@ window.WorkerBox = (function initWorkerBox() {
 
   }
 
-  const create = {
+  const creator = {
     prepend: createWorkerPrepend,
     stub: createWorkerStub,
   };
@@ -107,6 +107,22 @@ window.WorkerBox = (function initWorkerBox() {
   function findWorkerDefinition(script) {
 
     return workerDefinitions.find(definition => definition.script === script);
+
+  }
+
+  /**
+   * Creates a Worker from the given function and options.
+   *
+   * @public
+   * @param {Function} code
+   * @param {object} workerOptions
+   * @return {Worker}
+   */
+  function create(code, workerOptions) {
+
+    const blob = new Blob([stringifyFunction(code)], { type: 'application/javascript' });
+    const url = URL.createObjectURL(blob);
+    return new Worker(url, workerOptions);
 
   }
 
@@ -182,7 +198,7 @@ window.WorkerBox = (function initWorkerBox() {
       let worker;
       if (workerDefinition) {
 
-        worker = create[workerDefinition.type](workerDefinition, workerOptions);
+        worker = creator[workerDefinition.type](workerDefinition, workerOptions);
 
       } else {
 
@@ -217,6 +233,7 @@ window.WorkerBox = (function initWorkerBox() {
 
   return {
     cleanup,
+    create,
     prepend,
     setup,
     stub,
