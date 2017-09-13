@@ -7,6 +7,7 @@
       "browser": true
   },
   "rules": {
+      "no-param-reassign": [ "error", { "props": false } ],
       "no-restricted-globals": "off",
       "padded-blocks": [ "error", "always" ],
       "space-before-function-paren": "off",

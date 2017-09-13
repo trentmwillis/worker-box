@@ -1,20 +1,23 @@
 {
   "name": "worker-box",
   "version": "1.0.0",
-  "description": "Worker Box is a toolbox to help you test [Web Workers](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API). It provides an easy way to stub and modify your Workers without complicated test servers or monkey patches.",
+  "description": "A toolbox to help you test Web Workers",
   "main": "index.js",
   "directories": {
     "doc": "docs"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "lint": "eslint '**/*.js'",
+    "test": "testem ci",
+    "test:dev": "testem"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "Trent Willis <trentmwillis@gmail.com>",
+  "license": "MIT",
   "devDependencies": {
     "eslint": "^4.6.1",
     "eslint-config-airbnb-base": "^12.0.0",
     "eslint-plugin-import": "^2.7.0",
-    "qunitjs": "^2.4.0"
+    "qunitjs": "^2.4.0",
+    "testem": "^1.18.4"
   }
 }
