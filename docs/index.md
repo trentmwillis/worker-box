@@ -1,5 +1,21 @@
 Worker Box is a toolbox to help you test [Web Workers](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API). It provides an easy way to stub and modify your Workers without complicated test servers or monkey patches.
 
+## Installation
+
+Install Worker Box through [npm](https://www.npmjs.com/):
+
+```bash
+npm install --save-dev worker-box
+```
+
+And then load it via a script tag in your page:
+
+```html
+<script src="/node_modules/worker-box/index.js"></script>
+```
+
+And that's it! The `WorkerBox` global should now be available for use.
+
 ## Setup and Cleanup
 
 To use Worker Box, you start by simply calling:
