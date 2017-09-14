@@ -1,6 +1,6 @@
 {
   "name": "worker-box",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A toolbox to help you test Web Workers",
   "main": "index.js",
   "directories": {
