@@ -89,6 +89,32 @@ QUnit.module('WorkerBox', function(hooks) {
 
     });
 
+    QUnit.test('imports scripts relative to the current url', function(assert) {
+
+      const done = assert.async();
+      const originalMessage = 'foo';
+      const worker = WorkerBox.create(() => {
+
+        self.importScripts('/tests/fixtures/define-env.js');
+        self.importScripts('./fixtures/environment-worker.js');
+
+      });
+      worker.onmessage = (message) => {
+
+        assert.deepEqual(message.data, {
+          environment: {
+            from: 'define-env',
+          },
+          message: 'foo',
+        });
+        worker.terminate();
+        done();
+
+      };
+      worker.postMessage(originalMessage);
+
+    });
+
   });
 
   QUnit.module('stub', function(nestedHooks) {
