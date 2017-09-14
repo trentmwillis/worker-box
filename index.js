@@ -120,7 +120,14 @@ window.WorkerBox = (function initWorkerBox() {
    */
   function create(code, workerOptions) {
 
-    const blob = new Blob([stringifyFunction(code)], { type: 'application/javascript' });
+    const src = [];
+
+    src.push(`${stubImportScripts.toString()}`);
+    src.push('stubImportScripts();');
+    src.push(`importScripts.relativeTo('${location.href}');`);
+    src.push(stringifyFunction(code));
+
+    const blob = new Blob([src.join('\n')], { type: 'application/javascript' });
     const url = URL.createObjectURL(blob);
     return new Worker(url, workerOptions);
 
