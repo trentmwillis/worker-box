@@ -419,4 +419,44 @@ QUnit.module('WorkerBox', function(hooks) {
 
   });
 
+  QUnit.module('unregister', function() {
+
+    QUnit.test('allows you to re-prepend a worker', function(assert) {
+
+      WorkerBox.setup();
+
+      WorkerBox.prepend('/tests/fixtures/simple-worker.js');
+      assert.throws(() => WorkerBox.prepend('/tests/fixtures/simple-worker.js'), /The Worker script "\/tests\/fixtures\/simple-worker.js" has already been registered with "prepend"/);
+
+      WorkerBox.unregister('/tests/fixtures/simple-worker.js');
+      WorkerBox.prepend('/tests/fixtures/simple-worker.js');
+
+    });
+
+    QUnit.test('allows you to re-stub a worker', function(assert) {
+
+      WorkerBox.setup();
+
+      WorkerBox.stub('/tests/fixtures/simple-worker.js');
+      assert.throws(() => WorkerBox.stub('/tests/fixtures/simple-worker.js'), /The Worker script "\/tests\/fixtures\/simple-worker.js" has already been registered with "stub"/);
+
+      WorkerBox.unregister('/tests/fixtures/simple-worker.js');
+      WorkerBox.stub('/tests/fixtures/simple-worker.js');
+
+    });
+
+    QUnit.test('works with different relative paths', function(assert) {
+
+      WorkerBox.setup();
+
+      WorkerBox.stub('/tests/fixtures/simple-worker.js');
+      assert.throws(() => WorkerBox.stub('/tests/fixtures/simple-worker.js'), /The Worker script "\/tests\/fixtures\/simple-worker.js" has already been registered with "stub"/);
+
+      WorkerBox.unregister('../../tests/fixtures/simple-worker.js');
+      WorkerBox.stub('/tests/fixtures/simple-worker.js');
+
+    });
+
+  });
+
 });
