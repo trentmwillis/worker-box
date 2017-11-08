@@ -1,3 +1,8 @@
+1.1.0 / 2017-11-08
+==================
+
+  * Add unregister function for removing previous definitions
+
 1.0.1 / 2017-09-14
 ==================
 
