@@ -77,6 +77,15 @@ This is particularly useful for scenarios where you wish to alter some state bef
 
 The parameters and options for `prepend` are the same as for `stub`. The only difference is that after `importScripts` and `code` execute, the original Worker script will also execute. Note that `importScripts` executed from within your original Worker will resolve paths relative to that Worker's path as they would in normal usage.
 
+## Unregister Prepend or Stub Definitions
+
+By default, if you prepend or stub a Worker, you can not use prepend or stub again on that same Worker. If you need to redefine the override for any reason, you can use the `unregister` method.
+
+```js
+WorkerBox.stub(scriptPath);
+WorkerBox.unregister(scriptPath);
+```
+
 ## Creating A Worker
 
 If you want to create a Worker directly, as opposed to stubbing/modifying a Worker script, you can use the `create` function.

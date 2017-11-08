@@ -190,6 +190,32 @@ window.WorkerBox = (function initWorkerBox() {
 
   }
 
+
+  /**
+   * Unregisters a worker definition that was previously registered with either
+   * prepend or stub. Returns a boolean indicating whether or not a registration
+   * was removed.
+   *
+   * @public
+   * @param {string} script
+   * @return {boolean}
+   */
+  function unregister(script) {
+
+    const absoluteScript = (new URL(script, location.href)).toString();
+    const index = workerDefinitions.findIndex(definition => definition.script === absoluteScript);
+
+    if (index !== -1) {
+
+      workerDefinitions.splice(index, 1);
+      return true;
+
+    }
+
+    return false;
+
+  }
+
   function setup() {
 
     if (self.Worker.isWorkerBox) {
@@ -244,6 +270,7 @@ window.WorkerBox = (function initWorkerBox() {
     prepend,
     setup,
     stub,
+    unregister,
   };
 
 }());
